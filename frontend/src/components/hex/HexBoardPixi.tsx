@@ -85,7 +85,7 @@ function drawHexPolygon(tile: Graphics, points: PixelPoint[], style: TileStyle):
 
 function drawBoundarySegments(edge: Graphics, segments: PixelPoint[][], color: number, width: number): void {
   edge.clear();
-  edge.lineStyle({ color, width, join: 'round', cap: 'round' });
+  edge.lineStyle({ color, width, join: 'round', cap: 'round' } as never);
 
   for (const points of segments) {
     if (points.length === 0) {
