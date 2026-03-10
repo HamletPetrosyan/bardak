@@ -1,1 +1,4 @@
-/* /index.html 200
+/ /index.html 200
+/login /index.html 200
+/home /index.html 200
+/games/* /index.html 200
