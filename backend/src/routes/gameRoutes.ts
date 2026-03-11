@@ -46,11 +46,11 @@ gameRoutes.post('/:gameType/tables', (request, response) => {
   }
 });
 
-gameRoutes.post('/:gameType/tables/:tableId/seats/:seatIndex/join', (request, response) => {
+gameRoutes.post('/:gameType/tables/:tableId/seats/:seatIndex/join', async (request, response) => {
   try {
     const gameType = parseGameType(request.params.gameType);
     const seatIndex = Number(request.params.seatIndex);
-    const account = findAccountById(request.authAccountId!);
+    const account = await findAccountById(request.authAccountId!);
 
     if (!account) {
       response.status(404).json({ message: 'Account not found' });

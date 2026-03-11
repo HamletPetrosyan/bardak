@@ -13,10 +13,9 @@ import { createHexSocketServer } from './websocket/hexSocketServer.js';
 import { initializeHexSessionBridge } from './hex/index.js';
 import { initializeAccountsDatabase } from './database/accountsDatabase.js';
 import { initializeHexResultsDatabase } from './database/hexResultsDatabase.js';
+import { seedInitialAccountsFromEnvironment } from './data/accounts.js';
 
 const app = express();
-initializeAccountsDatabase();
-initializeHexResultsDatabase();
 
 app.use(
   cors({
@@ -65,6 +64,17 @@ setInterval(() => {
   runEmptyTableCleanup();
 }, TABLE_CLEANUP_INTERVAL_MS);
 
-server.listen(config.port, () => {
-  console.log(`Backend listening on http://localhost:${config.port}`);
+async function startServer(): Promise<void> {
+  await initializeAccountsDatabase();
+  await initializeHexResultsDatabase();
+  await seedInitialAccountsFromEnvironment();
+
+  server.listen(config.port, () => {
+    console.log(`Backend listening on http://localhost:${config.port}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Failed to start backend', error);
+  process.exit(1);
 });

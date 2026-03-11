@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <title>Hpam</title>
     <script>
-      window.location.replace('/');
+      var targetPath = window.location.pathname + window.location.search + window.location.hash;
+      window.location.replace('/?redirect=' + encodeURIComponent(targetPath));
     </script>
   </head>
   <body></body>

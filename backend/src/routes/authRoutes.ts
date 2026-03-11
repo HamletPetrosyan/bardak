@@ -6,7 +6,7 @@ import { createSessionToken } from '../utils/token.js';
 
 export const authRoutes = Router();
 
-authRoutes.post('/login', (request, response) => {
+authRoutes.post('/login', async (request, response) => {
   const accountKey = typeof request.body.accountKey === 'string' ? request.body.accountKey.trim() : '';
 
   if (!accountKey) {
@@ -14,7 +14,7 @@ authRoutes.post('/login', (request, response) => {
     return;
   }
 
-  const account = findAccountByKey(accountKey);
+  const account = await findAccountByKey(accountKey);
   if (!account) {
     response.status(401).json({ message: 'խոտան բանալի' });
     return;
@@ -29,8 +29,8 @@ authRoutes.post('/login', (request, response) => {
   });
 });
 
-authRoutes.get('/session', authMiddleware, (request, response) => {
-  const account = findAccountById(request.authAccountId!);
+authRoutes.get('/session', authMiddleware, async (request, response) => {
+  const account = await findAccountById(request.authAccountId!);
 
   if (!account) {
     response.status(404).json({ message: 'հաշիվը չգտնվեց' });

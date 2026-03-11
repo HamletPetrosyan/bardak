@@ -6,9 +6,10 @@ export function LoginPage() {
   const [accountKey, setAccountKey] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { token, login, loginError } = useAuth();
+  const pendingRedirectPath = new URLSearchParams(window.location.search).get('redirect');
 
   if (token) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to={pendingRedirectPath && pendingRedirectPath !== '/' ? pendingRedirectPath : '/home'} replace />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

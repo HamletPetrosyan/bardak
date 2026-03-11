@@ -4,7 +4,7 @@ import { updateAccountDisplayName } from '../data/accounts.js';
 
 export const userRoutes = Router();
 
-userRoutes.patch('/display-name', authMiddleware, (request, response) => {
+userRoutes.patch('/display-name', authMiddleware, async (request, response) => {
   const displayName = typeof request.body.displayName === 'string' ? request.body.displayName.trim() : '';
 
   if (!displayName) {
@@ -17,7 +17,7 @@ userRoutes.patch('/display-name', authMiddleware, (request, response) => {
     return;
   }
 
-  const user = updateAccountDisplayName(request.authAccountId!, displayName);
+  const user = await updateAccountDisplayName(request.authAccountId!, displayName);
 
   if (!user) {
     response.status(404).json({ message: 'Account not found' });

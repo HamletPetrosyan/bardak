@@ -11,6 +11,7 @@ Implemented now:
 - winner detection on backend
 - rematch voting in same session (both players must vote)
 - PixiJS board rendering in frontend
+- Supabase-backed account and result persistence
 
 Not implemented yet:
 - Belote gameplay
@@ -27,3 +28,4 @@ Not implemented yet:
 - [Hex Game Logic Explained](/home/erankyun/Hpam/docs/HEX_GAME_LOGIC_EXPLAINED.md)
 - [Hex Rendering Explained](/home/erankyun/Hpam/docs/HEX_RENDERING_EXPLAINED.md)
 - [How The Hex Session Works](/home/erankyun/Hpam/docs/HOW_THE_HEX_SESSION_WORKS.md)
+- [Free Deployment Guide](/home/erankyun/Hpam/docs/DEPLOYMENT_FREE_HOSTING.md)

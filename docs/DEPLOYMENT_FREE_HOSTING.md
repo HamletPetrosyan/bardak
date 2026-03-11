@@ -56,6 +56,7 @@ Backend:
 - `PORT`
 - `FRONTEND_ORIGIN`
 - `HEX_BOARD_SIZE`
+- `DATABASE_URL`
 - `ACCOUNT_KEY_PEPPER`
 - `ACCOUNT_KEY_ALICE` optional seed only
 - `ACCOUNT_KEY_BOB` optional seed only
@@ -66,14 +67,14 @@ Backend:
    This is now handled by [frontend/src/lib/runtimeUrls.ts](/home/erankyun/Hpam/frontend/src/lib/runtimeUrls.ts).
 
 2. The app uses `BrowserRouter`.
-   Cloudflare Pages needs a SPA rewrite rule.
-   This is now handled by [frontend/public/_redirects](/home/erankyun/Hpam/frontend/public/_redirects).
+   Cloudflare Pages needs a SPA fallback.
+   This is now handled by [frontend/public/404.html](/home/erankyun/Hpam/frontend/public/404.html).
 
 3. Backend CORS must match the real frontend domain.
    This is controlled by `FRONTEND_ORIGIN`.
 
-4. Current backend persistence uses SQLite files under `backend/storage/`.
-   This is not durable on a free Render web service, because Render free web services do not provide persistent local disk.
+4. Backend persistence now uses Supabase Postgres through `DATABASE_URL`.
+   This avoids the free-Render local-disk problem.
 
 ## 2. Required Code Changes
 
@@ -88,8 +89,8 @@ These changes are already applied in the repository.
 - Updated WebSocket files:
   - [frontend/src/lib/lobbySocket.ts](/home/erankyun/Hpam/frontend/src/lib/lobbySocket.ts)
   - [frontend/src/lib/hexSessionSocket.ts](/home/erankyun/Hpam/frontend/src/lib/hexSessionSocket.ts)
-- SPA redirects for Cloudflare Pages:
-  - [frontend/public/_redirects](/home/erankyun/Hpam/frontend/public/_redirects)
+- SPA fallback for Cloudflare Pages:
+  - [frontend/public/404.html](/home/erankyun/Hpam/frontend/public/404.html)
 
 ### Backend Changes
 
@@ -122,6 +123,7 @@ Backend `backend/.env`
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:5173
 HEX_BOARD_SIZE=11
+DATABASE_URL=postgresql://postgres.[YOUR-PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
 ACCOUNT_KEY_PEPPER=change-this-to-a-long-random-secret
 ACCOUNT_KEY_ALICE=replace-with-real-alice-key
 ACCOUNT_KEY_BOB=replace-with-real-bob-key
@@ -146,6 +148,7 @@ Render:
 ```env
 FRONTEND_ORIGIN=https://your-project.pages.dev
 HEX_BOARD_SIZE=11
+DATABASE_URL=postgresql://postgres.[YOUR-PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
 ACCOUNT_KEY_PEPPER=<long-random-secret>
 ACCOUNT_KEY_ALICE=<optional-first-seed-only>
 ACCOUNT_KEY_BOB=<optional-first-seed-only>
@@ -154,6 +157,18 @@ ACCOUNT_KEY_BOB=<optional-first-seed-only>
 `PORT` should normally be left alone on Render.
 
 ## 4. Deploy Backend to Render
+
+### Before Render: create Supabase database
+
+1. Create a Supabase account.
+2. Create a new project.
+3. Wait for the database to finish provisioning.
+4. Open:
+   - `Project Settings`
+   - `Database`
+   - `Connection string`
+5. Copy the **Session pooler** connection string.
+6. Use that value as `DATABASE_URL`.
 
 ### Step-by-step
 
@@ -183,6 +198,7 @@ npm run start
 10. Add Environment Variables:
    - `FRONTEND_ORIGIN=https://<your-pages-project>.pages.dev`
    - `HEX_BOARD_SIZE=11`
+   - `DATABASE_URL=<your-supabase-session-pooler-connection-string>`
    - `ACCOUNT_KEY_PEPPER=<long-random-secret>`
    - optional:
      - `ACCOUNT_KEY_ALICE=...`
@@ -385,8 +401,8 @@ Use this after both deployments are live.
 ### Refresh gives 404
 
 - This app uses `BrowserRouter`.
-- Make sure `_redirects` is deployed:
-  - [frontend/public/_redirects](/home/erankyun/Hpam/frontend/public/_redirects)
+- Make sure `404.html` is deployed:
+  - [frontend/public/404.html](/home/erankyun/Hpam/frontend/public/404.html)
 
 ### Missing environment variables
 
@@ -406,36 +422,15 @@ Use this after both deployments are live.
 
 ### Data disappears after redeploy or restart
 
-This is the major limitation of the current backend on free Render.
-
-Current backend persistence:
-
-- `backend/storage/accounts.sqlite`
-- `backend/storage/hex-results.sqlite`
-
-On free Render web services, local disk is not durable across service restarts/redeployments.
-
-That means:
-
-- account changes may be lost
-- recorded game results may be lost
+If Supabase is configured correctly through `DATABASE_URL`, this should not happen because the persistent data is no longer stored on the Render filesystem.
 
 ## 10. Important Reality Check About Free Hosting
 
 Frontend on Cloudflare Pages is fine.
 
-Backend on Render free web service will run, but your current SQLite persistence is not a stable production solution there.
+Backend on Render free web service is now much more practical because Supabase stores the persistent data separately.
 
-If you deploy exactly as-is:
-
-- app can work
-- login/lobby/game can work
-- but local database files are not guaranteed to survive
-
-So you have two realistic choices:
-
-1. Deploy now for testing and accept that stored names/results may reset.
-2. Move backend persistence to a hosted database before relying on deployed data.
+The main free-tier limitation left is Render service sleep, not local-disk durability.
 
 ## 11. Exact Commands You May Need
 
@@ -470,5 +465,6 @@ npm run account:upsert -- --account-id charlie --display-name Charlie --account-
 4. [frontend/src/lib/hexSessionSocket.ts](/home/erankyun/Hpam/frontend/src/lib/hexSessionSocket.ts)
 5. [backend/src/index.ts](/home/erankyun/Hpam/backend/src/index.ts)
 6. [backend/src/config.ts](/home/erankyun/Hpam/backend/src/config.ts)
-7. [backend/src/database/accountsDatabase.ts](/home/erankyun/Hpam/backend/src/database/accountsDatabase.ts)
-8. [backend/src/database/hexResultsDatabase.ts](/home/erankyun/Hpam/backend/src/database/hexResultsDatabase.ts)
+7. [backend/src/database/supabaseDatabase.ts](/home/erankyun/Hpam/backend/src/database/supabaseDatabase.ts)
+8. [backend/src/database/accountsDatabase.ts](/home/erankyun/Hpam/backend/src/database/accountsDatabase.ts)
+9. [backend/src/database/hexResultsDatabase.ts](/home/erankyun/Hpam/backend/src/database/hexResultsDatabase.ts)

@@ -23,7 +23,7 @@ hexRoutes.get('/sessions/:sessionId', (request, response) => {
   response.json({ session });
 });
 
-hexRoutes.post('/sessions/:sessionId/moves', (request, response) => {
+hexRoutes.post('/sessions/:sessionId/moves', async (request, response) => {
   try {
     const { row, col } = request.body as { row?: unknown; col?: unknown };
 
@@ -32,7 +32,7 @@ hexRoutes.post('/sessions/:sessionId/moves', (request, response) => {
       return;
     }
 
-    const session = playHexMove(request.params.sessionId, request.authAccountId!, {
+    const session = await playHexMove(request.params.sessionId, request.authAccountId!, {
       row,
       col
     });

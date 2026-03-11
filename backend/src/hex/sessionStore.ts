@@ -106,7 +106,7 @@ export function getHexSessionPublicState(sessionId: string): PublicHexSessionSta
   return toPublicState(session);
 }
 
-export function playHexMove(sessionId: string, accountId: string, move: HexMoveInput): PublicHexSessionState {
+export async function playHexMove(sessionId: string, accountId: string, move: HexMoveInput): Promise<PublicHexSessionState> {
   const session = getSessionOrThrow(sessionId);
   const wasGameOver = session.gameState.status === 'game-over';
 
@@ -134,7 +134,7 @@ export function playHexMove(sessionId: string, accountId: string, move: HexMoveI
   session.updatedAt = now();
 
   if (!wasGameOver && session.gameState.status === 'game-over') {
-    recordFinishedHexGame(session);
+    await recordFinishedHexGame(session);
   }
 
   emitChanged(session);

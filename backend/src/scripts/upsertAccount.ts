@@ -37,11 +37,11 @@ function parseArguments(): ParsedArgs {
   };
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const args = parseArguments();
 
-  initializeAccountsDatabase();
-  upsertStoredAccount({
+  await initializeAccountsDatabase();
+  await upsertStoredAccount({
     accountId: args.accountId,
     displayName: args.displayName,
     accountKeyHash: hashAccountKey(args.accountKey)
@@ -50,4 +50,7 @@ function main(): void {
   console.log(`Account saved: ${args.accountId}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

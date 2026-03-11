@@ -1,11 +1,11 @@
 import type { Account, PublicUser } from '../types.js';
-import { hashAccountKey, safeHexEqual } from '../security/accountKeyCrypto.js';
 import {
   findStoredAccountById,
-  findStoredAccountsForLogin,
+  findStoredAccountByLoginKey,
   seedAccountsDatabase,
   updateStoredAccountDisplayName
 } from '../database/accountsDatabase.js';
+import { hashAccountKey } from '../security/accountKeyCrypto.js';
 
 type AccountEnvMapping = {
   accountId: string;
@@ -26,7 +26,19 @@ const initialAccountDefinitions: AccountEnvMapping[] = [
   }
 ];
 
-function seedInitialAccountsFromEnvironment(): void {
+function toAccount(account: {
+  accountId: string;
+  displayName: string;
+  accountKeyHash: string;
+}): Account {
+  return {
+    accountId: account.accountId,
+    displayName: account.displayName,
+    accountKeyHash: account.accountKeyHash
+  };
+}
+
+export async function seedInitialAccountsFromEnvironment(): Promise<void> {
   const seedAccounts = initialAccountDefinitions.flatMap((definition) => {
     const rawKey = process.env[definition.keyEnvName];
 
@@ -43,47 +55,42 @@ function seedInitialAccountsFromEnvironment(): void {
     ];
   });
 
-  seedAccountsDatabase(seedAccounts);
+  await seedAccountsDatabase(seedAccounts);
 }
 
-seedInitialAccountsFromEnvironment();
-
-export function findAccountByKey(accountKey: string): Account | undefined {
-  const inputHash = hashAccountKey(accountKey);
-  const storedAccounts = findStoredAccountsForLogin();
-
-  const matchingAccount = storedAccounts.find((account) => safeHexEqual(account.accountKeyHash, inputHash));
+export async function findAccountByKey(accountKey: string): Promise<Account | undefined> {
+  const matchingAccount = await findStoredAccountByLoginKey(accountKey);
   if (!matchingAccount) {
     return undefined;
   }
 
-  return {
-    accountId: matchingAccount.accountId,
-    displayName: matchingAccount.displayName,
-    accountKeyHash: matchingAccount.accountKeyHash
-  };
+  return toAccount({
+    accountId: matchingAccount.account_id,
+    displayName: matchingAccount.display_name,
+    accountKeyHash: matchingAccount.account_key_hash
+  });
 }
 
-export function findAccountById(accountId: string): Account | undefined {
-  const account = findStoredAccountById(accountId);
-  if (!account || account.isDisabled) {
+export async function findAccountById(accountId: string): Promise<Account | undefined> {
+  const account = await findStoredAccountById(accountId);
+  if (!account || account.is_disabled) {
     return undefined;
   }
 
-  return {
-    accountId: account.accountId,
-    displayName: account.displayName,
-    accountKeyHash: account.accountKeyHash
-  };
+  return toAccount({
+    accountId: account.account_id,
+    displayName: account.display_name,
+    accountKeyHash: account.account_key_hash
+  });
 }
 
-export function updateAccountDisplayName(accountId: string, displayName: string): PublicUser | null {
-  const updated = updateStoredAccountDisplayName(accountId, displayName);
+export async function updateAccountDisplayName(accountId: string, displayName: string): Promise<PublicUser | null> {
+  const updated = await updateStoredAccountDisplayName(accountId, displayName);
   if (!updated) {
     return null;
   }
 
-  const account = findAccountById(accountId);
+  const account = await findAccountById(accountId);
   if (!account) {
     return null;
   }

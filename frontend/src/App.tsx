@@ -14,6 +14,16 @@ function RootRedirect() {
     return <p>Loading...</p>;
   }
 
+  const pendingRedirectPath = new URLSearchParams(window.location.search).get('redirect');
+
+  if (token && pendingRedirectPath && pendingRedirectPath !== '/') {
+    return <Navigate to={pendingRedirectPath} replace />;
+  }
+
+  if (!token && pendingRedirectPath && pendingRedirectPath !== '/') {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(pendingRedirectPath)}`} replace />;
+  }
+
   return <Navigate to={token ? '/home' : '/login'} replace />;
 }
 
